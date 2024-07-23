@@ -1,3 +1,5 @@
+PRODUCT_OTA_PUBLIC_KEYS := user-keys/releasekey
+PRODUCT_DEFAULT_DEV_CERTIFICATE := user-keys/releasekey
 ##############################################################################
 #
 # This file is part of AXP.OS (https://axp.binbash.rocks)
