@@ -6,9 +6,9 @@
 # Copyright (C) 2023-2025 steadfasterX <steadfasterX -AT- gmail #DOT# com>
 #
 #########################################################################################################
-# AXP.OS advanced AVB handling
+# AXP.OS common overrides and configs
 #
-# verification:
+# AVB verification:
 # $> external/avb/avbtool info_image --image vbmeta.img
 # $> external/avb/avbtool verify_image --follow_chain_partitions --image vbmeta.img
 #########################################################################################################
@@ -24,6 +24,11 @@
 # include vendor/axp/BoardConfigVendor.mk
 #
 #########################################################################################################
+
+# override vendor security patch date if set in vendor_firmware
+ifdef VENDOR_SECPATCH_DATE
+VENDOR_SECURITY_PATCH := "$(VENDOR_SECPATCH_DATE)"
+endif
 
 # load the AXP.OS advanced AVB handling - if not explictly denied
 ifneq ($(AXP_ENABLE_AVB), false)
