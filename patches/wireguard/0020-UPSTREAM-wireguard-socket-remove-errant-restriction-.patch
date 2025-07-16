@@ -1,0 +1,70 @@
+From 6687a002a30acf1f16315424335f6f6aee1bdc54 Mon Sep 17 00:00:00 2001
+From: "Jason A. Donenfeld" <Jason@zx2c4.com>
+Date: Wed, 6 May 2020 15:33:03 -0600
+Subject: [PATCH 20/56] UPSTREAM: wireguard: socket: remove errant restriction
+ on looping to self
+
+It's already possible to create two different interfaces and loop
+packets between them. This has always been possible with tunnels in the
+kernel, and isn't specific to wireguard. Therefore, the networking stack
+already needs to deal with that. At the very least, the packet winds up
+exceeding the MTU and is discarded at that point. So, since this is
+already something that happens, there's no need to forbid the not very
+exceptional case of routing a packet back to the same interface; this
+loop is no different than others, and we shouldn't special case it, but
+rather rely on generic handling of loops in general. This also makes it
+easier to do interesting things with wireguard such as onion routing.
+
+At the same time, we add a selftest for this, ensuring that both onion
+routing works and infinite routing loops do not crash the kernel. We
+also add a test case for wireguard interfaces nesting packets and
+sending traffic between each other, as well as the loop in this case
+too. We make sure to send some throughput-heavy traffic for this use
+case, to stress out any possible recursion issues with the locks around
+workqueues.
+
+Fixes: e7096c131e51 ("net: WireGuard secure network tunnel")
+Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+(cherry picked from commit b673e24aad36981f327a6570412ffa7754de8911)
+Bug: 152722841
+Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@google.com>
+Change-Id: I6e5cb7a9f76372af8e03b54e6c0b0d5d20787604
+---
+ drivers/net/wireguard/socket.c | 12 ------------
+ 1 file changed, 12 deletions(-)
+
+diff --git a/drivers/net/wireguard/socket.c b/drivers/net/wireguard/socket.c
+index b0d6541582d3..f9018027fc13 100644
+--- a/drivers/net/wireguard/socket.c
++++ b/drivers/net/wireguard/socket.c
+@@ -76,12 +76,6 @@ static int send4(struct wg_device *wg, struct sk_buff *skb,
+ 			net_dbg_ratelimited("%s: No route to %pISpfsc, error %d\n",
+ 					    wg->dev->name, &endpoint->addr, ret);
+ 			goto err;
+-		} else if (unlikely(rt->dst.dev == skb->dev)) {
+-			ip_rt_put(rt);
+-			ret = -ELOOP;
+-			net_dbg_ratelimited("%s: Avoiding routing loop to %pISpfsc\n",
+-					    wg->dev->name, &endpoint->addr);
+-			goto err;
+ 		}
+ 		if (cache)
+ 			dst_cache_set_ip4(cache, &rt->dst, fl.saddr);
+@@ -149,12 +143,6 @@ static int send6(struct wg_device *wg, struct sk_buff *skb,
+ 			net_dbg_ratelimited("%s: No route to %pISpfsc, error %d\n",
+ 					    wg->dev->name, &endpoint->addr, ret);
+ 			goto err;
+-		} else if (unlikely(dst->dev == skb->dev)) {
+-			dst_release(dst);
+-			ret = -ELOOP;
+-			net_dbg_ratelimited("%s: Avoiding routing loop to %pISpfsc\n",
+-					    wg->dev->name, &endpoint->addr);
+-			goto err;
+ 		}
+ 		if (cache)
+ 			dst_cache_set_ip6(cache, dst, &fl.saddr);
+-- 
+2.49.0
+

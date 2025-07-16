@@ -1,0 +1,37 @@
+From 3ffa67b70578292412daefe597af38452aee40da Mon Sep 17 00:00:00 2001
+From: Josh Soref <jsoref@gmail.com>
+Date: Sun, 15 Dec 2019 22:08:02 +0100
+Subject: [PATCH 02/56] UPSTREAM: wireguard: global: fix spelling mistakes in
+ comments
+
+This fixes two spelling errors in source code comments.
+
+Signed-off-by: Josh Soref <jsoref@gmail.com>
+[Jason: rewrote commit message]
+Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+(cherry picked from commit a2ec8b5706944d228181c8b91d815f41d6dd8e7b)
+Bug: 152722841
+Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@google.com>
+Change-Id: Id8dbd0f7ffa71358b7ecdee6a890cdfb4341f3c1
+---
+ drivers/net/wireguard/receive.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireguard/receive.c b/drivers/net/wireguard/receive.c
+index 7e675f541491..9c6bab9c981f 100644
+--- a/drivers/net/wireguard/receive.c
++++ b/drivers/net/wireguard/receive.c
+@@ -380,7 +380,7 @@ static void wg_packet_consume_data_done(struct wg_peer *peer,
+ 	/* We've already verified the Poly1305 auth tag, which means this packet
+ 	 * was not modified in transit. We can therefore tell the networking
+ 	 * stack that all checksums of every layer of encapsulation have already
+-	 * been checked "by the hardware" and therefore is unneccessary to check
++	 * been checked "by the hardware" and therefore is unnecessary to check
+ 	 * again in software.
+ 	 */
+ 	skb->ip_summed = CHECKSUM_UNNECESSARY;
+-- 
+2.49.0
+

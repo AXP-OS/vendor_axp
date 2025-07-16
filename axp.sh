@@ -56,15 +56,18 @@ sed -i "s|%%DOS_OTA_SERVER_ONION_SECONDARY_NAME%%|${DOS_OTA_SERVER_ONION_SECONDA
 if [ ! -f "$AXP_KERNEL_PATH/.wg.patched" ];then
     cd $AXP_KERNEL_PATH
     if [ -d "net/wireguard" ];then rm -rf net/wireguard ;fi
-    mkdir -p net/wireguard/compat
-    if [ -f $CPWD/kernel/wireguard-linux-compat/kernel-tree-scripts/create-patch.sh ];then
-        $CPWD/kernel/wireguard-linux-compat/kernel-tree-scripts/create-patch.sh | patch -p1 --no-backup-if-mismatch
-        git add -A && git commit --author="Jason A. Donenfeld <Jason@zx2c4.com>" -m "apply wireguard-linux-compat"
-        echo "[AXP] .. patched kernel sources for wireguard"
-    else
-        echo "[AXP] ERROR patching kernel sources for wireguard (missing compat patcher)!"
-        exit 3
-    fi
+
+    for p in $(find $CPWD/vendor/axp/patches/wireguard/ -type f -name '*.patch');do
+        patch -p1 -st --dry-run < $p #> /dev/null 2>&1
+        if [ $? -eq 0 ];then
+            git am $p
+        else
+            echo "[AXP] ERROR patching kernel sources for wireguard!"
+            exit 3
+        fi
+    done
+    echo "[AXP] .. patched kernel sources for wireguard"
+
     cd $CPWD
     touch $AXP_KERNEL_PATH/.wg.patched
 else

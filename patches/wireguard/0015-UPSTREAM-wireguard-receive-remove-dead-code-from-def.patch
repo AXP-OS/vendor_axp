@@ -1,0 +1,42 @@
+From 263d9adaacf20ed855b2ac0a8401819255a53cf8 Mon Sep 17 00:00:00 2001
+From: "Jason A. Donenfeld" <Jason@zx2c4.com>
+Date: Wed, 18 Mar 2020 18:30:46 -0600
+Subject: [PATCH 15/56] UPSTREAM: wireguard: receive: remove dead code from
+ default packet type case
+
+The situation in which we wind up hitting the default case here
+indicates a major bug in earlier parsing code. It is not a usual thing
+that should ever happen, which means a "friendly" message for it doesn't
+make sense. Rather, replace this with a WARN_ON, just like we do earlier
+in the file for a similar situation, so that somebody sends us a bug
+report and we can fix it.
+
+Reported-by: Fabian Freyer <fabianfreyer@radicallyopensecurity.com>
+Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+(cherry picked from commit 2b8765c52db24c0fbcc81bac9b5e8390f2c7d3c8)
+Bug: 152722841
+Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@google.com>
+Change-Id: I40e109e5bac6541d309b588958ef0e09b3b9c19b
+---
+ drivers/net/wireguard/receive.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireguard/receive.c b/drivers/net/wireguard/receive.c
+index 243ed7172dd2..da3b782ab7d3 100644
+--- a/drivers/net/wireguard/receive.c
++++ b/drivers/net/wireguard/receive.c
+@@ -587,8 +587,7 @@ void wg_packet_receive(struct wg_device *wg, struct sk_buff *skb)
+ 		wg_packet_consume_data(wg, skb);
+ 		break;
+ 	default:
+-		net_dbg_skb_ratelimited("%s: Invalid packet from %pISpfsc\n",
+-					wg->dev->name, skb);
++		WARN(1, "Non-exhaustive parsing of packet header lead to unknown packet type!\n");
+ 		goto err;
+ 	}
+ 	return;
+-- 
+2.49.0
+

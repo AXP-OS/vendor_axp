@@ -1,0 +1,83 @@
+From 4f6171eb7736bb6a76980c861aeb21531d382ea8 Mon Sep 17 00:00:00 2001
+From: "Jason A. Donenfeld" <Jason@zx2c4.com>
+Date: Mon, 3 Jul 2023 03:27:05 +0200
+Subject: [PATCH 55/56] UPSTREAM: wireguard: netlink: send staged packets when
+ setting initial private key
+
+Packets bound for peers can queue up prior to the device private key
+being set. For example, if persistent keepalive is set, a packet is
+queued up to be sent as soon as the device comes up. However, if the
+private key hasn't been set yet, the handshake message never sends, and
+no timer is armed to retry, since that would be pointless.
+
+But, if a user later sets a private key, the expectation is that those
+queued packets, such as a persistent keepalive, are actually sent. So
+adjust the configuration logic to account for this edge case, and add a
+test case to make sure this works.
+
+Maxim noticed this with a wg-quick(8) config to the tune of:
+
+    [Interface]
+    PostUp = wg set %i private-key somefile
+
+    [Peer]
+    PublicKey = ...
+    Endpoint = ...
+    PersistentKeepalive = 25
+
+Here, the private key gets set after the device comes up using a PostUp
+script, triggering the bug.
+
+Bug: 254441685
+Fixes: e7096c131e51 ("net: WireGuard secure network tunnel")
+Cc: stable@vger.kernel.org
+Reported-by: Maxim Cournoyer <maxim.cournoyer@gmail.com>
+Tested-by: Maxim Cournoyer <maxim.cournoyer@gmail.com>
+Link: https://lore.kernel.org/wireguard/87fs7xtqrv.fsf@gmail.com/
+Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+(cherry picked from commit f58d0a9b4c6a7a5199c3af967e43cc8b654604d4)
+Signed-off-by: Lee Jones <joneslee@google.com>
+Change-Id: Ibd4ca40b44ec6c2e0e75b026b2f63dfda37b4b34
+---
+ drivers/net/wireguard/netlink.c | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/net/wireguard/netlink.c b/drivers/net/wireguard/netlink.c
+index 493524646351..0722d4407b7e 100644
+--- a/drivers/net/wireguard/netlink.c
++++ b/drivers/net/wireguard/netlink.c
+@@ -556,6 +556,7 @@ static int wg_set_device(struct sk_buff *skb, struct genl_info *info)
+ 		u8 *private_key = nla_data(info->attrs[WGDEVICE_A_PRIVATE_KEY]);
+ 		u8 public_key[NOISE_PUBLIC_KEY_LEN];
+ 		struct wg_peer *peer, *temp;
++		bool send_staged_packets;
+ 
+ 		if (!crypto_memneq(wg->static_identity.static_private,
+ 				   private_key, NOISE_PUBLIC_KEY_LEN))
+@@ -574,14 +575,17 @@ static int wg_set_device(struct sk_buff *skb, struct genl_info *info)
+ 		}
+ 
+ 		down_write(&wg->static_identity.lock);
+-		wg_noise_set_static_identity_private_key(&wg->static_identity,
+-							 private_key);
+-		list_for_each_entry_safe(peer, temp, &wg->peer_list,
+-					 peer_list) {
++		send_staged_packets = !wg->static_identity.has_identity && netif_running(wg->dev);
++		wg_noise_set_static_identity_private_key(&wg->static_identity, private_key);
++		send_staged_packets = send_staged_packets && wg->static_identity.has_identity;
++
++		wg_cookie_checker_precompute_device_keys(&wg->cookie_checker);
++		list_for_each_entry_safe(peer, temp, &wg->peer_list, peer_list) {
+ 			wg_noise_precompute_static_static(peer);
+ 			wg_noise_expire_current_peer_keypairs(peer);
++			if (send_staged_packets)
++				wg_packet_send_staged_packets(peer);
+ 		}
+-		wg_cookie_checker_precompute_device_keys(&wg->cookie_checker);
+ 		up_write(&wg->static_identity.lock);
+ 	}
+ skip_set_private_key:
+-- 
+2.49.0
+

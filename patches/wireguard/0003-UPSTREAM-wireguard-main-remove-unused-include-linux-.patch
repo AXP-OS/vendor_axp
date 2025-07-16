@@ -1,0 +1,36 @@
+From 69b3f7a3ad50b76691473569f31aba8181971825 Mon Sep 17 00:00:00 2001
+From: YueHaibing <yuehaibing@huawei.com>
+Date: Sun, 15 Dec 2019 22:08:03 +0100
+Subject: [PATCH 03/56] UPSTREAM: wireguard: main: remove unused include
+ <linux/version.h>
+
+Remove <linux/version.h> from the includes for main.c, which is unused.
+
+Signed-off-by: YueHaibing <yuehaibing@huawei.com>
+[Jason: reworded commit message]
+Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+(cherry picked from commit 43967b6ff91e53bcce5ae08c16a0588a475b53a1)
+Bug: 152722841
+Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@google.com>
+Change-Id: I5ee6cedcb037dbe522ab50dcc5b7c66f06d76b16
+---
+ drivers/net/wireguard/main.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/net/wireguard/main.c b/drivers/net/wireguard/main.c
+index 10c0a40f6a9e..7a7d5f1a80fc 100644
+--- a/drivers/net/wireguard/main.c
++++ b/drivers/net/wireguard/main.c
+@@ -12,7 +12,6 @@
+ 
+ #include <uapi/linux/wireguard.h>
+ 
+-#include <linux/version.h>
+ #include <linux/init.h>
+ #include <linux/module.h>
+ #include <linux/genetlink.h>
+-- 
+2.49.0
+
