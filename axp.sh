@@ -4,7 +4,7 @@
 # This file is part of AXP.OS (https://axpos.org)
 # LICENSE: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Copyright (C) 2023-2025 steadfasterX <steadfasterX -AT- gmail #DOT# com>
+# Copyright (C) 2023-2025 steadfasterX <steadfasterX -AT- binbash #DOT# com>
 #
 ###############################################################################
 
@@ -99,7 +99,7 @@ if [ "$AXP_BUILD_OPENEUICC" == "true" ];then
     cd packages/apps/OpenEUICC
     git submodule update --init && echo "[AXP] .. OpenEUICC submodules initiated successfully"
     cd $CPWD
-    # TODO: do not apply the hacky-fix by divest (as that is included in axp's fork)! -> Scripts/LineageOS-XXX/Patch.sh
+    # FIXME: do not apply the hacky-fix by divest (as that is included in axp's fork)! -> Scripts/LineageOS-XXX/Patch.sh
 else
     echo "[AXP] .. skip building OpenEUICC (set AXP_BUILD_OPENEUICC=true in divested.vars.DEVICE to build it)"
     sed -i -E 's/^PRODUCT_PACKAGES.*OpenEUICC/# openeuicc disabled by AXP.OS/g' vendor/divested/packages.mk
@@ -107,12 +107,6 @@ else
 fi
 
 # fixup divest deblob leftovers
-#if [ -f device/google/gs101/device.mk ];then
-#  sed -i "/google iwlan/,+5d" device/google/gs101/device.mk
-#  cd device/google/gs101
-#  git add -A && git commit --author="${AXP_GIT_AUTHOR} <${AXP_GIT_MAIL}>" -m "gs101: fix divest deblob leftovers"
-#  cd $CPWD
-#fi
 if [ -f device/google/gs201/widevine/device.mk ];then
     head -n1 device/google/gs201/widevine/device.mk | grep -q PRODUCT_PACKAGES || sed -i '1i\
 PRODUCT_PACKAGES += \\' device/google/gs201/widevine/device.mk
@@ -121,6 +115,7 @@ PRODUCT_PACKAGES += \\' device/google/gs201/widevine/device.mk
     cd $CPWD
 fi
 
+# FIXME: still needed??
 if [ "$AXP_DEVICE" == "FP4" ];then
     echo "[AXP] ... specific FP4 adjustments"
     grep -q BOARD_AVB_VBMETA_SYSTEM device/${AXP_DEVICEVENDOR}/${AXP_DEVICE}/BoardConfig.mk \
@@ -132,11 +127,13 @@ if [ "$AXP_LOW_STORAGE" == "yes" ];then
     echo "[AXP] ... free-up reserved space"
     BOARDRESERVATION="BOARD_PRODUCTIMAGE_EXTFS_INODE_COUNT BOARD_PRODUCTIMAGE_PARTITION_RESERVED_SIZE BOARD_SYSTEMIMAGE_EXTFS_INODE_COUNT BOARD_SYSTEMIMAGE_PARTITION_RESERVED_SIZE BOARD_SYSTEM_EXTIMAGE_EXTFS_INODE_COUNT BOARD_SYSTEM_EXTIMAGE_PARTITION_RESERVED_SIZE"
 
-    cd device/${AXP_DEVICEVENDOR}/${AXP_DEVICE}
-    for rserv in $BOARDRESERVATION;do
-        grep -qE "^$rserv" Board*.mk \
-            && sed -i -E "s/^(${rserv}.*)/#\1/g" Board*.mk
+    for bmk in $(find device/${AXP_DEVICEVENDOR}/ -name 'Board*.mk');do
+        for rserv in $BOARDRESERVATION;do
+            grep -qE "^$rserv" $bmk \
+                && sed -i -E "s/^(${rserv}.*)/#\1/g" $bmk
+        done
     done
+    
     git add -A && git commit --author="${AXP_GIT_AUTHOR} <${AXP_GIT_MAIL}>" -m "${AXP_DEVICE}: remove reserved space for AXP.OS" \
         && echo "[AXP] OK: freed-up reserved space!"
     cd $CPWD
