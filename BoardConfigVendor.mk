@@ -57,7 +57,11 @@ endif # filter
 ifdef BOARD_AVB_SYSTEM_KEY_PATH
 BOARD_AVB_SYSTEM_KEY_PATH := $(BOARD_AVB_KEY_PATH)
 endif
-:
+
+ifdef BOARD_AVB_VBMETA_SYSTEM_KEY_PATH
+BOARD_AVB_VBMETA_SYSTEM_KEY_PATH := $(BOARD_AVB_KEY_PATH)
+endif
+
 # overwrite testkeys on init_boot partition if defined (e.g. gs201)
 ifdef BOARD_AVB_INIT_BOOT_KEY_PATH
 BOARD_AVB_INIT_BOOT_KEY_PATH := $(BOARD_AVB_KEY_PATH)
