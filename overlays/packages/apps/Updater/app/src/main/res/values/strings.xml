@@ -5,6 +5,10 @@
     <string name="export_path" translatable="false">AXP.OS updates/</string>
     <string name="updater_server_url" translatable="false">%%AXP_OTA_SERVER_URI%%</string>
 
+    <!-- Major releases will be blocked by the Updater -->
+    <string name="blocked_update_info_url" translatable="false">https://axpos.org/MajorReleaseUpgrade</string>
+
+    <!-- Server choices -->
     <string name="menu_server_choice_primary">%%DOS_OTA_SERVER_PRIMARY_NAME%%</string>
     <string name="menu_server_choice_secondary">%%DOS_OTA_SERVER_SECONDARY_NAME%%</string>
     <string name="menu_server_choice_onion_primary">%%DOS_OTA_SERVER_ONION_PRIMARY_NAME%%</string>
