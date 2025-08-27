@@ -27,7 +27,7 @@
 
 # override vendor security patch date if set in vendor_firmware
 ifdef VENDOR_SECPATCH_DATE
-VENDOR_SECURITY_PATCH := "$(VENDOR_SECPATCH_DATE)"
+VENDOR_SECURITY_PATCH := $(VENDOR_SECPATCH_DATE)
 endif
 
 # load the AXP.OS advanced AVB handling - if not explictly denied
