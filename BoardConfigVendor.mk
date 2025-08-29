@@ -93,7 +93,7 @@ BOARD_AVB_VENDOR_ALGORITHM := $(BOARD_AVB_ALGORITHM)
 BOARD_AVB_VENDOR_KERNEL_BOOT_ALGORITHM := $(BOARD_AVB_ALGORITHM)
 CUSTOM_IMAGE_AVB_ALGORITHM := $(BOARD_AVB_ALGORITHM)
 
-# enable for troublehshooting vbmeta digest:
+# enable for troubleshooting vbmeta digest:
 # (do not set on productive builds)
 #BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --set_hashtree_disabled_flag
 #BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flag 2
@@ -111,27 +111,34 @@ TARGET_AVB_SYSTEM_OTHER_HASHTREE_ALGORITHM := $(TARGET_AVB_GLOBAL_HASHTREE_ALGOR
 TARGET_AVB_SYSTEM_EXT_HASHTREE_ALGORITHM := $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 TARGET_AVB_SYSTEM_DLKM_HASHTREE_ALGORITHM := $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 
+# strip any existing hash_algorithm arguments
+define strip_hash_algorithm
+$(shell echo $(1) | sed -E 's/--hash_algorithm sha[1-9]+//g')
+endef
+#set_axp_algo = $(strip $(filter-out --hash_algorithm sha1 --hash_algorithm sha256 --hash_algorithm sha512,$(1))) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+#BOARD_AVB_SYSTEM_ADD_HASHTREE_FOOTER_ARGS := $(call set_axp_algo,$(BOARD_AVB_SYSTEM_ADD_HASHTREE_FOOTER_ARGS))
+
 # enforce global hashtree footer algorithm for system
-BOARD_AVB_SYSTEM_ADD_HASHTREE_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_SYSTEM_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_SYSTEM_ADD_HASHTREE_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 
 # if required, enforce global hash footer algorithm for vendor_boot
 ifdef BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE
-BOARD_AVB_VENDOR_BOOT_ADD_HASH_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_VENDOR_BOOT_ADD_HASH_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_VENDOR_BOOT_ADD_HASH_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 endif
 
 # if required, enforce global hash footer algorithm for init_boot
 ifdef BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE
-BOARD_AVB_INIT_BOOT_ADD_HASH_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_INIT_BOOT_ADD_HASH_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_INIT_BOOT_ADD_HASH_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 endif
 
 # if required, enforce global hash footer algorithm for vendor_kernel
 ifdef BOARD_VENDOR_KERNEL_BOOTIMAGE_PARTITION_SIZE
-BOARD_AVB_VENDOR_KERNEL_BOOT_ADD_HASH_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_VENDOR_KERNEL_BOOT_ADD_HASH_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_VENDOR_KERNEL_BOOT_ADD_HASH_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 endif
 
 # if required, enforce global hash footer algorithm for pvmfw
 ifdef BOARD_PVMFWIMAGE_PARTITION_SIZE
-BOARD_AVB_PVMFW_ADD_HASH_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_PVMFW_ADD_HASH_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_PVMFW_ADD_HASH_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 endif
 
 # FP3 breaks when adding hashtree footers (at least on boot + dtbo) so filter it out when detected
@@ -139,25 +146,24 @@ endif
 ifeq ($(filter FP3,$(BDEVICE)),) # <-- likely we need to identify the root cause for this, i.e. e.g. "if chaining"?
 
 # enforce global hashtree algorithm for boot, dtbo, recovery, system, system_other|ext|dlkm, product
-BOARD_AVB_BOOT_ADD_HASH_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
-BOARD_AVB_DTBO_ADD_HASH_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_BOOT_ADD_HASH_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_BOOT_ADD_HASH_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_DTBO_ADD_HASH_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_DTBO_ADD_HASH_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 
 # enforce global hashtree algorithm for recovery but only when there is a dedicated recovery
 ifneq ($(TARGET_NO_RECOVERY),true)
-BOARD_AVB_RECOVERY_ADD_HASH_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_RECOVERY_ADD_HASH_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_RECOVERY_ADD_HASH_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 endif
 
-BOARD_AVB_SYSTEM_OTHER_ADD_HASHTREE_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
-BOARD_AVB_SYSTEM_EXT_ADD_HASHTREE_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
-BOARD_AVB_SYSTEM_DLKM_ADD_HASHTREE_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
-BOARD_AVB_PRODUCT_ADD_HASHTREE_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_SYSTEM_OTHER_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_SYSTEM_OTHER_ADD_HASHTREE_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_SYSTEM_EXT_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_SYSTEM_EXT_ADD_HASHTREE_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_SYSTEM_DLKM_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_SYSTEM_DLKM_ADD_HASHTREE_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_PRODUCT_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_PRODUCT_ADD_HASHTREE_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 
 # enforce global hashtree algorithm for vendor, odm
-BOARD_AVB_ODM_ADD_HASHTREE_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
-BOARD_AVB_VENDOR_ADD_HASHTREE_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_ODM_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_ODM_ADD_HASHTREE_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_VENDOR_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_VENDOR_ADD_HASHTREE_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 
 # enforce global hashtree algorithm for vendor_dlkm , odm_dlkm
-BOARD_AVB_ODM_DLKM_ADD_HASHTREE_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
-BOARD_AVB_VENDOR_DLKM_ADD_HASHTREE_FOOTER_ARGS += --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
-
+BOARD_AVB_ODM_DLKM_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_ODM_DLKM_ADD_HASHTREE_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+BOARD_AVB_VENDOR_DLKM_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_VENDOR_DLKM_ADD_HASHTREE_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 endif # ifeq filter FP3
