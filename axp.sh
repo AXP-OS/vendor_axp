@@ -110,6 +110,9 @@ fi
 if [ -f device/google/gs201/widevine/device.mk ];then
     head -n1 device/google/gs201/widevine/device.mk | grep -q PRODUCT_PACKAGES || sed -i '1i\
 PRODUCT_PACKAGES += \\' device/google/gs201/widevine/device.mk
+
+    sed -i 's#device/google/gs201/widevine/device.mk##' device/google/gs201/device.mk
+                                                                               
     cd device/google/gs201
     git add -A && git commit --author="${AXP_GIT_AUTHOR} <${AXP_GIT_MAIL}>" -m "gs201: fix divest deblob leftovers"
     cd $CPWD
