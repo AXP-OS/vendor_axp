@@ -1,0 +1,14 @@
+
+project packages/apps/Settings/
+diff --git a/src/com/android/settings/accounts/AccountTypePreferenceLoader.java b/src/com/android/settings/accounts/AccountTypePreferenceLoader.java
+index 84386a38f08..11e755dcb00 100644
+--- a/src/com/android/settings/accounts/AccountTypePreferenceLoader.java
++++ b/src/com/android/settings/accounts/AccountTypePreferenceLoader.java
+@@ -34,7 +34,6 @@ import android.util.Log;
+ 
+ import androidx.annotation.NonNull;
+ import androidx.annotation.Nullable;
+-import androidx.annotation.VisibleForTesting;
+ import androidx.collection.ArraySet;
+ import androidx.preference.Preference;
+ import androidx.preference.Preference.OnPreferenceClickListener;
