@@ -12,11 +12,6 @@
 #set -e
 
 CPWD=$PWD
-# get build vars (requires a lunch before!)
-export AXP_TARGET_VERSION=$(build/soong/soong_ui.bash --dumpvar-mode PLATFORM_VERSION  2>/dev/null)
-export AXP_TARGET_ARCH=$(build/soong/soong_ui.bash --dumpvar-mode TARGET_ARCH  2>/dev/null)
-export AXP_KERNEL_PATH=$(build/soong/soong_ui.bash --dumpvar-mode TARGET_KERNEL_SOURCE  2>/dev/null)
-export AXP_KERNEL_CONF=$(build/soong/soong_ui.bash --dumpvar-mode TARGET_KERNEL_CONFIG  2>/dev/null)
 
 echo "AXP_TARGET_VERSION: $AXP_TARGET_VERSION"
 echo "AXP_TARGET_ARCH: $AXP_TARGET_ARCH"
@@ -50,47 +45,6 @@ sed -i "s|%%DOS_OTA_SERVER_PRIMARY_NAME%%|${DOS_OTA_SERVER_PRIMARY_NAME}|g" vend
 sed -i "s|%%DOS_OTA_SERVER_SECONDARY_NAME%%|${DOS_OTA_SERVER_SECONDARY_NAME}|g" vendor/axp/overlays/packages/apps/Updater/app/src/main/res/values/strings.xml && echo "[AXP] .. updated OTA DOS_OTA_SERVER_SECONDARY_NAME"
 sed -i "s|%%DOS_OTA_SERVER_ONION_PRIMARY_NAME%%|${DOS_OTA_SERVER_ONION_PRIMARY_NAME}|g" vendor/axp/overlays/packages/apps/Updater/app/src/main/res/values/strings.xml && echo "[AXP] .. updated OTA DOS_OTA_SERVER_ONION_PRIMARY_NAME"
 sed -i "s|%%DOS_OTA_SERVER_ONION_SECONDARY_NAME%%|${DOS_OTA_SERVER_ONION_SECONDARY_NAME}|g" vendor/axp/overlays/packages/apps/Updater/app/src/main/res/values/strings.xml && echo "[AXP] .. updated OTA DOS_OTA_SERVER_ONION_SECONDARY_NAME"
-
-# patch kernel source to build wireguard module
-# (see: https://www.wireguard.com/compilation/#building-directly-in-tree)
-if [ ! -f "$AXP_KERNEL_PATH/.wg.patched" ];then
-    cd $AXP_KERNEL_PATH
-    if [ -d "net/wireguard" ];then rm -rf net/wireguard ;fi
-    mkdir -p net/wireguard/compat
-    if [ -f $CPWD/kernel/wireguard-linux-compat/kernel-tree-scripts/create-patch.sh ];then
-        $CPWD/kernel/wireguard-linux-compat/kernel-tree-scripts/create-patch.sh | patch -p1 --no-backup-if-mismatch
-        git add -A && git commit --author="Jason A. Donenfeld <Jason@zx2c4.com>" -m "apply wireguard-linux-compat"
-        echo "[AXP] .. patched kernel sources for wireguard"
-    else
-        echo "[AXP] ERROR patching kernel sources for wireguard (missing compat patcher)!"
-        exit 3
-    fi
-    cd $CPWD
-    touch $AXP_KERNEL_PATH/.wg.patched
-else
-    echo "[AXP] .. kernel is already patched for wireguard (patch indicator exists)"
-fi
-
-# patch kernel defconfig
-if [ ! -f "$AXP_KERNEL_PATH/.defconf.patched" ];then
-    for cf in $AXP_DEFCONFIG_GLOBALS; do
-       grep -q "^$cf=y" $AXP_KERNEL_PATH/arch/$AXP_TARGET_ARCH/configs/$AXP_KERNEL_CONF || echo -e "\n$cf=y" >> $AXP_KERNEL_PATH/arch/$AXP_TARGET_ARCH/configs/$AXP_KERNEL_CONF
-       cd $AXP_KERNEL_PATH
-       git add -A && git commit --author="${AXP_GIT_AUTHOR} <${AXP_GIT_MAIL}>" -m "defconfig: applied: $cf"
-       echo "[AXP] .. kernel globals defconfig $cf has been set"
-       cd $CPWD
-    done
-    for cfd in $AXP_DEFCONFIG_DEVICE; do
-       grep -q "^$cfd" $AXP_KERNEL_PATH/arch/$AXP_TARGET_ARCH/configs/$AXP_KERNEL_CONF || echo -e "\n$cfd" >> $AXP_KERNEL_PATH/arch/$AXP_TARGET_ARCH/configs/$AXP_KERNEL_CONF
-       cd $AXP_KERNEL_PATH
-       git add -A && git commit --author="${AXP_GIT_AUTHOR} <${AXP_GIT_MAIL}>" -m "defconfig: applied $cfd"
-       echo "[AXP] .. kernel device specific defconfig $cfd has been set"
-       cd $CPWD
-    done
-    touch $AXP_KERNEL_PATH/.defconf.patched
-else
-    echo "[AXP] .. kernel defconfig is already patched (patch indicator exists)"
-fi
 
 # OpenEUICC handling
 if [ "$AXP_BUILD_OPENEUICC" == "true" ];then
