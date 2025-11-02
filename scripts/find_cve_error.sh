@@ -10,6 +10,9 @@
 KERNPATH="$1"
 LOGFILE="$2"
 
+# exclude kleaf build paths by default, can be overwritten with --strip <string>
+STRIP="execroot/__main__/aosp"
+
 usage() {
   echo "Usage: $0 [--search|-s SEARCH_STRING] [--parse|-p -k KERNEL_PATH -L LOGFILE_PATH]"
   echo ""
@@ -44,6 +47,7 @@ while [[ $# -gt 0 ]]; do
       shift
       while [[ $# -gt 0 ]]; do
         case $1 in
+	  --strip) STRIP="$2"; shift 2;;
           -k)
             if [ -n "$2" ]; then
               KERNPATHU=$2
@@ -56,7 +60,7 @@ while [[ $# -gt 0 ]]; do
             ;;
           -L)
             if [ -n "$2" ]; then
-              LOGFILE=$2
+              LOGFILE="$2"
               shift 2
             else
               echo "Error: -L requires a logfile path."
@@ -80,7 +84,8 @@ done
 f_parse(){
     cd $KERNPATH
 
-    for blame in $(grep error: "$LOGFILE" | grep -E ':[0-9]+:[0-9]+:' | sed -E "s|.*${KERNPATH}/||g" | cut -d : -f1-2 | grep : | sort -u | grep -vE '^$' | tr '\n' " " | sed 's#private/gs-google/##g');do
+    for blame in $(grep error: "$LOGFILE" | grep -E ':[0-9]+:[0-9]+:' | sed -E "s|.*${STRIP}/||g;s|.*${KERNPATH}/||g" | cut -d : -f1-2 | grep : | sort -u | grep -vE '^$' | tr '\n' " " | sed 's#private/gs-google/##g');do
+	echo $blame
         echo "bp=${blame/:*} ln=${blame/*:}"
         export bp="${blame/:*}" ln="${blame/*:}"
         export commit=$(git blame $bp |grep " ${ln})" | cut -d " " -f1)
