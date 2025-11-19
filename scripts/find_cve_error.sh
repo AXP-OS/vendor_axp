@@ -85,7 +85,7 @@ f_parse(){
     cd $KERNPATH
 
     for blame in $(grep error: "$LOGFILE" | grep -E ':[0-9]+:[0-9]+:' | sed -E "s|.*${STRIP}/||g;s|.*${KERNPATH}/||g" | cut -d : -f1-2 | grep : | sort -u | grep -vE '^$' | tr '\n' " " | sed 's#private/gs-google/##g');do
-	echo $blame
+	      echo $blame
         echo "bp=${blame/:*} ln=${blame/*:}"
         export bp="${blame/:*}" ln="${blame/*:}"
         export commit=$(git blame $bp |grep " ${ln})" | cut -d " " -f1)
@@ -117,7 +117,8 @@ f_parse(){
         echo "Woot?! no CVE(s) found? NOTE: a CLEAN build incl. full patching is REQUIRED to find matching CVE's."
     else
         echo -en "\nPROBLEMATIC_CVES: "
-        for cv in $TCVE;do echo -n "\"$cv\" " ;done
+        just_cve_excl=$(for cv in $TCVE;do echo -n "\"$cv\" " ;done)
+        echo -e "$just_cve_excl" | tr ' ' '\n' | sort -u | tr '\n' ' '
         echo -e "\n\n"
     fi
 
