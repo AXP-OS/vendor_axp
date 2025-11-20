@@ -30,18 +30,28 @@ ifdef VENDOR_SECPATCH_DATE
 VENDOR_SECURITY_PATCH := $(VENDOR_SECPATCH_DATE)
 endif
 
-# load the AXP.OS advanced AVB handling - if not explictly denied
+# Enable android verified boot - if not explictly denied
 ifneq ($(AXP_ENABLE_AVB), false)
-# Enable android verified boot
 BOARD_AVB_ENABLE := true
-endif
+endif # AXP_ENABLE_AVB
 
 # AVB key size and hash
+ifdef AXP_AVB_ALGORITM
+BOARD_AVB_ALGORITHM := $(AXP_AVB_ALGORITM)
+else
 BOARD_AVB_ALGORITHM := SHA512_RSA4096
+endif # AXP_AVB_ALGORITM
 
 # pub key (avb_pkmd.bin) must be flashed to avb_custom_key partition
+# !!! must match BOARD_AVB_ALGORITHM !!!
 # see https://axpos.org/Bootloader-Lock
 BOARD_AVB_KEY_PATH := user-keys/avb.pem
+
+#########################################################################################################
+# load the AXP.OS advanced AVB handling - if not explictly denied
+# i.e. the following configurations will be applied (if conditions within match)
+# if AXP_ENABLE_AVB_HANDLING is false the defaults will be applied (if AXP_ENABLE_AVB != false)
+ifneq ($(AXP_ENABLE_AVB_HANDLING), false)
 
 # BOARD_AVB_RECOVERY_KEY_PATH must be defined for if non-A/B is supported. e.g. klte
 # See https://android.googlesource.com/platform/external/avb/+/master/README.md#booting-into-recovery
@@ -167,3 +177,5 @@ BOARD_AVB_VENDOR_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD
 BOARD_AVB_ODM_DLKM_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_ODM_DLKM_ADD_HASHTREE_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 BOARD_AVB_VENDOR_DLKM_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_VENDOR_DLKM_ADD_HASHTREE_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
 endif # ifeq filter FP3
+
+endif # AXP_ENABLE_AVB_HANDLING
