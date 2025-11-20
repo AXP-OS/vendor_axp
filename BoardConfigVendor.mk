@@ -108,12 +108,36 @@ CUSTOM_IMAGE_AVB_ALGORITHM := $(BOARD_AVB_ALGORITHM)
 #BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --set_hashtree_disabled_flag
 #BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flag 2
 
-# Using either sha256 or sha512 for the hashtree of all partitions depending on the device performance
+##############################
+# hashtree algorithm handling
+
+# Treat empty or "default" the same:
+ifeq ($(strip $(AXP_HASHTREE_ALGORITHM)),)
+# empty
+AXP_HASHTREE_ALGORITHM_DEFAULT := 1
+else ifeq ($(AXP_HASHTREE_ALGORITHM),default)
+# explicitly set to default
+AXP_HASHTREE_ALGORITHM_DEFAULT := 1
+endif # AXP_HASHTREE_ALGORITHM
+
+ifdef AXP_HASHTREE_ALGORITHM_DEFAULT
+
+# if AXP_HASHTREE_ALGORITHM is unset
+# use either sha256 or sha512 for the hashtree of all partitions depending on the device performance
 ifdef AXP_LOWEND_DEVICE
 TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM := sha256
 else
 TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM := sha512
-endif
+endif # AXP_LOWEND_DEVICE
+
+else
+# custom algorithm provided
+TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM := $(AXP_HASHTREE_ALGORITHM)
+endif # AXP_HASHTREE_ALGORITHM_DEFAULT
+
+# END: hashtree algorithm handling
+###################################
+
 
 # overwrite general hashtree algorithms
 TARGET_AVB_SYSTEM_HASHTREE_ALGORITHM := $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
