@@ -30,22 +30,57 @@ ifdef VENDOR_SECPATCH_DATE
 VENDOR_SECURITY_PATCH := $(VENDOR_SECPATCH_DATE)
 endif
 
-# Enable android verified boot - if not explictly denied
-ifneq ($(AXP_ENABLE_AVB), false)
+#########################################################################################################
+# note:
+# if AXP_ENABLE_AVB is true, AXP_AVB_VERSION has to be defined and accepts: 1|2
+ifeq ($(AXP_ENABLE_AVB),true)
+
+# do we want AVB 1 or 2?
+ifeq ($(strip $(AXP_AVB_VERSION)),1)
+
+# AVB 1.x requires special handling
+$(warning Using AVB v1 handling!)
+BOARD_AVB_VBMETA_PARTITION :=
+
+# disable AVB >= 2 handling
+BOARD_AVB_ENABLE := false
+AXP_ENABLE_AVB_HANDLING := false
+
+else ifeq ($(strip $(AXP_AVB_VERSION)),2) # AXP_AVB_VERSION
+
+$(warning Using AVB v2 handling!)
+
+# Enable android verified boot
 BOARD_AVB_ENABLE := true
-endif # AXP_ENABLE_AVB
 
 # AVB key size and hash
-ifdef AXP_AVB_ALGORITM
-BOARD_AVB_ALGORITHM := $(AXP_AVB_ALGORITM)
+ifdef AXP_AVB_ALGORITHM
+BOARD_AVB_ALGORITHM := $(AXP_AVB_ALGORITHM)
 else
 BOARD_AVB_ALGORITHM := SHA512_RSA4096
-endif # AXP_AVB_ALGORITM
+endif # AXP_AVB_ALGORITHM
 
 # pub key (avb_pkmd.bin) must be flashed to avb_custom_key partition
 # !!! must match BOARD_AVB_ALGORITHM !!!
 # see https://axpos.org/Bootloader-Lock
 BOARD_AVB_KEY_PATH := user-keys/avb.pem
+
+# overwrite testkeys if set
+ifdef BOARD_AVB_VBMETA_SYSTEM_KEY_PATH
+BOARD_AVB_VBMETA_SYSTEM_KEY_PATH := $(BOARD_AVB_KEY_PATH)
+endif
+
+ifdef BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX
+BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+endif
+
+else # AXP_AVB_VERSION
+
+$(error missing AXP_AVB_VERSION environment variable! Must be set to either 1 or 2 when "AXP_ENABLE_AVB := true".)
+
+endif # AXP_AVB_VERSION
+
+endif # AXP_ENABLE_AVB
 
 #########################################################################################################
 # load the AXP.OS advanced AVB handling - if not explictly denied
@@ -55,7 +90,7 @@ ifneq ($(AXP_ENABLE_AVB_HANDLING), false)
 
 # BOARD_AVB_RECOVERY_KEY_PATH must be defined for if non-A/B is supported. e.g. klte
 # See https://android.googlesource.com/platform/external/avb/+/master/README.md#booting-into-recovery
-ifneq ($(filter klte cheeseburger dumpling,$(BDEVICE)),)
+ifneq ($(filter klte,$(BDEVICE)),)
 BOARD_AVB_RECOVERY_KEY_PATH := $(BOARD_AVB_KEY_PATH)
 BOARD_AVB_RECOVERY_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
 ifndef BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION
@@ -63,17 +98,17 @@ BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION := 1
 endif # BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION 
 endif # filter
 
-# overwrite testkeys on system partition if defined (e.g. FP3)
+# overwrite testkeys on partitions if defined (e.g. FP3)
+ifdef BOARD_AVB_BOOT_KEY_PATH
+BOARD_AVB_BOOT_KEY_PATH := $(BOARD_AVB_KEY_PATH)
+endif
+
 ifdef BOARD_AVB_SYSTEM_KEY_PATH
 BOARD_AVB_SYSTEM_KEY_PATH := $(BOARD_AVB_KEY_PATH)
 endif
 
-ifdef BOARD_AVB_VBMETA_SYSTEM_KEY_PATH
-BOARD_AVB_VBMETA_SYSTEM_KEY_PATH := $(BOARD_AVB_KEY_PATH)
-endif
-
-ifdef BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX
-BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+ifdef BOARD_AVB_VENDOR_KEY_PATH
+BOARD_AVB_VENDOR_KEY_PATH := $(BOARD_AVB_KEY_PATH)
 endif
 
 # overwrite testkeys on init_boot partition if defined (e.g. gs201)
@@ -137,7 +172,6 @@ endif # AXP_HASHTREE_ALGORITHM_DEFAULT
 
 # END: hashtree algorithm handling
 ###################################
-
 
 # overwrite general hashtree algorithms
 TARGET_AVB_SYSTEM_HASHTREE_ALGORITHM := $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
