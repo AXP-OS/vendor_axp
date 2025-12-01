@@ -8,7 +8,12 @@
 #########################################################################################################
 # AXP.OS common overrides and configs
 #
-# AVB verification:
+# AVB 1 verification:
+# $> mka generate_verity_key
+# $> boot_signer -verify boot.img | recovery.img
+# $> verity_verifier vendor.img -mincrypt user-keys/verity_key
+#
+# AVB 2 verification:
 # $> external/avb/avbtool info_image --image vbmeta.img
 # $> external/avb/avbtool verify_image --follow_chain_partitions --image vbmeta.img
 #########################################################################################################
@@ -37,21 +42,29 @@ ifeq ($(AXP_ENABLE_AVB),true)
 
 # do we want AVB 1 or 2?
 ifeq ($(strip $(AXP_AVB_VERSION)),1)
-
-# AVB 1.x requires special handling
 $(warning Using AVB v1 handling!)
-BOARD_AVB_VBMETA_PARTITION :=
 
 # disable AVB >= 2 handling
 BOARD_AVB_ENABLE := false
 AXP_ENABLE_AVB_HANDLING := false
 
 else ifeq ($(strip $(AXP_AVB_VERSION)),2) # AXP_AVB_VERSION
-
 $(warning Using AVB v2 handling!)
 
-# Enable android verified boot
+# enable AVB 2 handling
 BOARD_AVB_ENABLE := true
+AXP_ENABLE_AVB_HANDLING := true
+
+else # AXP_AVB_VERSION
+$(error missing AXP_AVB_VERSION environment variable! Must be set to either 1 or 2 when "AXP_ENABLE_AVB := true".)
+
+endif # AXP_AVB_VERSION
+
+#########################################################################################################
+# load the AXP.OS advanced AVB handling - if not explictly denied
+# i.e. the following configurations will be applied (if conditions within match)
+# if AXP_ENABLE_AVB_HANDLING is false the defaults will be applied (if AXP_ENABLE_AVB != false)
+ifneq ($(AXP_ENABLE_AVB_HANDLING), false)
 
 # AVB key size and hash
 ifdef AXP_AVB_ALGORITHM
@@ -73,20 +86,6 @@ endif
 ifdef BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX
 BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
 endif
-
-else # AXP_AVB_VERSION
-
-$(error missing AXP_AVB_VERSION environment variable! Must be set to either 1 or 2 when "AXP_ENABLE_AVB := true".)
-
-endif # AXP_AVB_VERSION
-
-endif # AXP_ENABLE_AVB
-
-#########################################################################################################
-# load the AXP.OS advanced AVB handling - if not explictly denied
-# i.e. the following configurations will be applied (if conditions within match)
-# if AXP_ENABLE_AVB_HANDLING is false the defaults will be applied (if AXP_ENABLE_AVB != false)
-ifneq ($(AXP_ENABLE_AVB_HANDLING), false)
 
 # BOARD_AVB_RECOVERY_KEY_PATH must be defined for if non-A/B is supported. e.g. klte
 # See https://android.googlesource.com/platform/external/avb/+/master/README.md#booting-into-recovery
@@ -237,3 +236,5 @@ BOARD_AVB_VENDOR_DLKM_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(
 endif # ifeq filter FP3
 
 endif # AXP_ENABLE_AVB_HANDLING
+
+endif # AXP_ENABLE_AVB
