@@ -42,14 +42,14 @@ ifeq ($(AXP_ENABLE_AVB),true)
 
 # do we want AVB 1 or 2?
 ifeq ($(strip $(AXP_AVB_VERSION)),1)
-$(warning Using AVB v1 handling!)
+$(warning AXP.OS: Using AVB v1 handling!)
 
 # disable AVB >= 2 handling
 BOARD_AVB_ENABLE := false
 AXP_ENABLE_AVB_HANDLING := false
 
 else ifeq ($(strip $(AXP_AVB_VERSION)),2) # AXP_AVB_VERSION
-$(warning Using AVB v2 handling!)
+$(warning AXP.OS: Using AVB v2 handling!)
 
 # enable AVB 2 handling
 BOARD_AVB_ENABLE := true
@@ -65,6 +65,8 @@ endif # AXP_AVB_VERSION
 # i.e. the following configurations will be applied (if conditions within match)
 # if AXP_ENABLE_AVB_HANDLING is false the defaults will be applied (if AXP_ENABLE_AVB != false)
 ifneq ($(AXP_ENABLE_AVB_HANDLING), false)
+
+$(warning AXP.OS: Using AVB - ADVANCED handling!)
 
 # AVB key size and hash
 ifdef AXP_AVB_ALGORITHM
@@ -236,5 +238,9 @@ BOARD_AVB_VENDOR_DLKM_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(
 endif # ifeq filter FP3
 
 endif # AXP_ENABLE_AVB_HANDLING
+
+else # AXP_ENABLE_AVB
+
+$(warning AXP.OS: SKIPPED AVB handling!)
 
 endif # AXP_ENABLE_AVB
