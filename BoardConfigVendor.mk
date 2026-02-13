@@ -3,7 +3,7 @@
 # This file is part of AXP.OS (https://axpos.org)
 # LICENSE: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Copyright (C) 2023-2025 steadfasterX <steadfasterX -AT- gmail #DOT# com>
+# Copyright (C) 2023-2026 steadfasterX <steadfasterX -AT- gmail #DOT# com>
 #
 #########################################################################################################
 # AXP.OS common overrides and configs
