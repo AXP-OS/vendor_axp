@@ -4,6 +4,7 @@
 # LICENSE: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 # Copyright (C) 2023-2026 steadfasterX <steadfasterX -AT- gmail #DOT# com>
+# Copyright (C) 2026 The AXP.OS Project <project -AT- axpos #DOT# org>
 #
 #########################################################################################################
 # AXP.OS common overrides and configs
@@ -189,6 +190,10 @@ endef
 
 # enforce global hashtree footer algorithm for system
 BOARD_AVB_SYSTEM_ADD_HASHTREE_FOOTER_ARGS := $(call strip_hash_algorithm,$(BOARD_AVB_SYSTEM_ADD_HASHTREE_FOOTER_ARGS)) --hash_algorithm $(TARGET_AVB_GLOBAL_HASHTREE_ALGORITHM)
+
+ifeq ($(strip $(AXP_AVB_ENFORCE_SYSTEM_CMDLINE)),1)
+BOARD_AVB_SYSTEM_ADD_HASHTREE_FOOTER_ARGS += --setup_as_rootfs_from_kernel
+endif
 
 # if required, enforce global hash footer algorithm for vendor_boot
 ifdef BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE
